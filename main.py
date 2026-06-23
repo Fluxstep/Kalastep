@@ -100,10 +100,10 @@ daily_claims = load_daily()
 # ================= GAME STATE =================
 
 game_states = {}
+setup_sessions = {}  # {user_id: {"guild_id": ..., "step": ..., "data": ...}}
 
 # ================= DICTIONARY & WORD VALIDATION =================
 
-# Words that shouldn't be used (no valid continuations)
 BAD_ENDINGS = {'rd', 'ng', 'lf', 'mp', 'nk', 'lp', 'ft', 'lm', 'ld', 'lt'}
 
 def load_dictionary():
@@ -254,9 +254,7 @@ def load_dictionary():
         'world', 'worry', 'worse', 'worst', 'worth', 'would', 'wound', 'wrist', 'write',
         'wrong', 'wrote', 'yards', 'years', 'yells', 'yield', 'young', 'yours', 'youth',
         'zebra', 'zones', 'zoned', 'zoom', 'zoomed', 'zooming', 'online', 'playing', 'flower',
-        'mountain', 'discord', 'python', 'server', 'channel', 'message', 'player', 'winner',
-        'loser', 'heart', 'smile', 'laugh', 'think', 'dream', 'magic', 'power', 'strong',
-        'weak', 'smart', 'quick', 'slow', 'fast', 'light', 'dark', 'sunny', 'rainy'
+        'mountain', 'discord', 'python', 'server', 'channel', 'message', 'player', 'winner'
     }
 
     print(f"✅ Loaded {len(fallback_words)} words from fallback dictionary")
@@ -267,27 +265,27 @@ dictionary = load_dictionary()
 # ================= HELPER FUNCTIONS =================
 
 def get_guild_id(ctx_or_message):
-    """Extract guild ID from context or message"""
+    """Extract guild ID"""
     if hasattr(ctx_or_message, 'guild') and ctx_or_message.guild:
         return str(ctx_or_message.guild.id)
     return "dm"
 
 def ensure_guild_data(data_dict, guild_id):
-    """Ensure guild exists in data structure"""
+    """Ensure guild exists"""
     guild_id = str(guild_id)
     if guild_id not in data_dict:
         data_dict[guild_id] = {}
     return data_dict[guild_id]
 
 def get_server_channels(guild_id):
-    """Get server channel configuration"""
+    """Get server config"""
     guild_id = str(guild_id)
     if guild_id in servers:
         return servers[guild_id]
     return None
 
 def init_game_state(guild_id):
-    """Initialize game state for a guild"""
+    """Initialize game state"""
     guild_id = str(guild_id)
     if guild_id not in game_states:
         game_states[guild_id] = {
@@ -307,18 +305,18 @@ def is_valid_word(word):
     return True
 
 def has_bad_ending(word):
-    """Check if word ends with a bad ending"""
+    """Check if word ends with bad ending"""
     for bad_ending in BAD_ENDINGS:
         if word.endswith(bad_ending):
             return True
     return False
 
 def get_next_words(prefix):
-    """Get all valid words starting with prefix"""
+    """Get words starting with prefix"""
     return [word for word in dictionary if word.startswith(prefix)]
 
 def find_valid_words(last_two_letters, used_words):
-    """Find valid words for chain rule"""
+    """Find valid words"""
     candidates = get_next_words(last_two_letters)
     candidates = [w for w in candidates if w not in used_words]
     
@@ -331,7 +329,7 @@ def find_valid_words(last_two_letters, used_words):
     return fallback, last_two_letters[-1:]
 
 def get_hint_word(last_word, used_words):
-    """Get a hint word"""
+    """Get hint word"""
     if not last_word:
         return random.choice(list(dictionary))
     
@@ -345,7 +343,7 @@ def get_hint_word(last_word, used_words):
 # ================= COINS (GUILD-ISOLATED) =================
 
 def add_coins(guild_id, user_id, amount):
-    """Add coins to a user"""
+    """Add coins"""
     guild_id = str(guild_id)
     user_id = str(user_id)
     
@@ -355,7 +353,7 @@ def add_coins(guild_id, user_id, amount):
     return guild_data[user_id]
 
 def remove_coins(guild_id, user_id, amount):
-    """Remove coins from a user"""
+    """Remove coins"""
     guild_id = str(guild_id)
     user_id = str(user_id)
     
@@ -369,7 +367,7 @@ def remove_coins(guild_id, user_id, amount):
     return False
 
 def get_user_coins(guild_id, user_id):
-    """Get user's coins"""
+    """Get user coins"""
     guild_id = str(guild_id)
     user_id = str(user_id)
     
@@ -419,7 +417,7 @@ def claim_daily(guild_id, user_id):
 # ================= LEADERBOARD (GUILD-ISOLATED) =================
 
 def add_leaderboard_point(guild_id, user_id):
-    """Add point to leaderboard"""
+    """Add leaderboard point"""
     guild_id = str(guild_id)
     user_id = str(user_id)
     
@@ -427,100 +425,6 @@ def add_leaderboard_point(guild_id, user_id):
     guild_data[user_id] = guild_data.get(user_id, 0) + 1
     save_leaderboard(leaderboard)
     return guild_data[user_id]
-
-# ================= SETUP VIEW =================
-
-class SetupModal(discord.ui.Modal, title="Kaladont Setup"):
-    general = discord.ui.TextInput(label="General Chat Channel ID", placeholder="123456789")
-    commands = discord.ui.TextInput(label="Commands Channel ID", placeholder="123456789")
-    game = discord.ui.TextInput(label="Game Channel ID", placeholder="123456789")
-
-    async def on_submit(self, interaction: discord.Interaction):
-        guild_id = str(interaction.guild.id)
-        
-        try:
-            general_id = int(self.general.value)
-            commands_id = int(self.commands.value)
-            game_id = int(self.game.value)
-        except:
-            embed = discord.Embed(
-                title="❌ Invalid Channel ID",
-                description="All channel IDs must be numbers.",
-                color=discord.Color.red()
-            )
-            embed.set_footer(text="Made by Fluxstep")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-
-        # Verify channels exist
-        guild = interaction.guild
-        general_channel = guild.get_channel(general_id)
-        commands_channel = guild.get_channel(commands_id)
-        game_channel = guild.get_channel(game_id)
-
-        if not general_channel or not commands_channel or not game_channel:
-            embed = discord.Embed(
-                title="❌ Setup Failed",
-                description="One or more channels don't exist in this server.",
-                color=discord.Color.red()
-            )
-            embed.set_footer(text="Made by Fluxstep")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-
-        # Save configuration
-        servers[guild_id] = {
-            "general": general_id,
-            "commands": commands_id,
-            "game": game_id
-        }
-        save_servers(servers)
-
-        # Send done view
-        view = DoneButton(interaction, general_channel, commands_channel, game_channel)
-        embed = discord.Embed(
-            title="✅ Configuration Preview",
-            description="Please confirm these channels:",
-            color=discord.Color.green()
-        )
-        embed.add_field(name="General Chat", value=general_channel.mention, inline=False)
-        embed.add_field(name="Commands", value=commands_channel.mention, inline=False)
-        embed.add_field(name="Game", value=game_channel.mention, inline=False)
-        embed.set_footer(text="Made by Fluxstep")
-
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-
-class DoneButton(discord.ui.View):
-    def __init__(self, interaction, general, commands, game):
-        super().__init__()
-        self.interaction = interaction
-        self.general = general
-        self.commands = commands
-        self.game = game
-
-    @discord.ui.button(label="✅ Done", style=discord.ButtonStyle.green)
-    async def done_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(
-            title="✅ Setup Completed",
-            description="Kaladont is ready to play!",
-            color=discord.Color.green()
-        )
-        embed.add_field(name="General Chat", value=self.general.mention, inline=False)
-        embed.add_field(name="Commands", value=self.commands.mention, inline=False)
-        embed.add_field(name="Game", value=self.game.mention, inline=False)
-        embed.set_footer(text="Made by Fluxstep")
-
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-        # Send public message in game channel
-        game_embed = discord.Embed(
-            title="🎮 Kaladont has started!",
-            description="Start with any valid word with at least 4 letters.\n\nNext word must start with the last 2 letters of the previous word.",
-            color=discord.Color.blurple()
-        )
-        game_embed.set_footer(text="Made by Fluxstep")
-
-        await self.game.send(embed=game_embed)
 
 # ================= EVENTS =================
 
@@ -532,9 +436,8 @@ async def on_ready():
 
 @bot.event
 async def on_guild_join(guild):
-    """When bot joins a new server"""
+    """When bot joins a server"""
     try:
-        # Create KalaOwner role if it doesn't exist
         existing_role = discord.utils.get(guild.roles, name="KalaOwner")
         
         if not existing_role:
@@ -542,13 +445,20 @@ async def on_guild_join(guild):
             print(f"✅ Created KalaOwner role in {guild.name}")
         else:
             role = existing_role
-            print(f"✅ KalaOwner role already exists in {guild.name}")
 
-        # Give role to owner
         await guild.owner.add_roles(role)
         print(f"✅ Gave KalaOwner to {guild.owner} in {guild.name}")
     except Exception as e:
         print(f"❌ Error setting up roles: {e}")
+
+@bot.event
+async def on_command_error(ctx, error):
+    """Handle command errors silently"""
+    if isinstance(error, commands.CommandNotFound):
+        return
+    if isinstance(error, commands.MissingRequiredArgument):
+        return
+    # Ignore other errors silently to prevent spam
 
 @bot.event
 async def on_message(message):
@@ -560,7 +470,7 @@ async def on_message(message):
     guild_id = get_guild_id(message)
     server_config = get_server_channels(guild_id)
 
-    # If server not setup, process commands anyway
+    # Handle commands
     if message.content.startswith("!"):
         await bot.process_commands(message)
         return
@@ -587,6 +497,14 @@ async def on_message(message):
     if message.channel.id != server_config["game"]:
         return
 
+    # DELETE ALL MESSAGES STARTING WITH ! (commands in game channel)
+    if message.content.startswith("!"):
+        try:
+            await message.delete()
+        except:
+            pass
+        return
+
     init_game_state(guild_id)
     state = game_states[guild_id]
 
@@ -600,7 +518,10 @@ async def on_message(message):
             color=discord.Color.red()
         )
         embed.set_footer(text="Made by Fluxstep")
-        await message.author.send(embed=embed)
+        try:
+            await message.author.send(embed=embed)
+        except:
+            pass
         await message.delete()
         return
 
@@ -612,7 +533,10 @@ async def on_message(message):
             color=discord.Color.red()
         )
         embed.set_footer(text="Made by Fluxstep")
-        await message.author.send(embed=embed)
+        try:
+            await message.author.send(embed=embed)
+        except:
+            pass
         await message.delete()
         return
 
@@ -624,7 +548,10 @@ async def on_message(message):
             color=discord.Color.red()
         )
         embed.set_footer(text="Made by Fluxstep")
-        await message.author.send(embed=embed)
+        try:
+            await message.author.send(embed=embed)
+        except:
+            pass
         await message.delete()
         return
 
@@ -636,7 +563,10 @@ async def on_message(message):
             color=discord.Color.red()
         )
         embed.set_footer(text="Made by Fluxstep")
-        await message.author.send(embed=embed)
+        try:
+            await message.author.send(embed=embed)
+        except:
+            pass
         await message.delete()
         return
 
@@ -658,7 +588,10 @@ async def on_message(message):
                 color=discord.Color.red()
             )
             embed.set_footer(text="Made by Fluxstep")
-            await message.author.send(embed=embed)
+            try:
+                await message.author.send(embed=embed)
+            except:
+                pass
             await message.delete()
             return
 
@@ -683,12 +616,12 @@ async def on_message(message):
     except:
         pass
 
-# ================= COMMANDS =================
+# ================= SETUP COMMAND (PREFIX) =================
 
 @bot.command()
 async def setup(ctx):
     """Setup Kaladont for this server [KalaOwner only]"""
-    # Check if user is owner or has KalaOwner role
+    # Check permissions
     if ctx.author != ctx.guild.owner:
         kala_owner_role = discord.utils.get(ctx.guild.roles, name="KalaOwner")
         if not kala_owner_role or kala_owner_role not in ctx.author.roles:
@@ -698,11 +631,186 @@ async def setup(ctx):
                 color=discord.Color.red()
             )
             embed.set_footer(text="Made by Fluxstep")
-            await ctx.send(embed=embed, ephemeral=True)
+            try:
+                await ctx.author.send(embed=embed)
+            except:
+                pass
+            await ctx.message.delete()
             return
 
-    modal = SetupModal()
-    await ctx.interaction.response.send_modal(modal)
+    # Start setup session
+    user_id = ctx.author.id
+    guild_id = str(ctx.guild.id)
+
+    setup_sessions[user_id] = {
+        "guild_id": guild_id,
+        "step": 1,
+        "data": {}
+    }
+
+    embed = discord.Embed(
+        title="🎮 Kaladont Setup - Step 1/3",
+        description="Please send the **General Chat Channel ID**\n\nHow to get it:\n1. Right-click the channel\n2. Click 'Copy Channel ID'",
+        color=discord.Color.blurple()
+    )
+    embed.set_footer(text="Made by Fluxstep")
+
+    try:
+        await ctx.author.send(embed=embed)
+    except:
+        pass
+
+    await ctx.message.delete()
+
+    # Wait for response
+    def check(m):
+        return m.author == ctx.author and m.guild is None
+
+    try:
+        # Step 1: General Channel
+        msg = await bot.wait_for("message", check=check, timeout=300)
+        try:
+            general_id = int(msg.content)
+            if not ctx.guild.get_channel(general_id):
+                embed = discord.Embed(
+                    title="❌ Invalid Channel",
+                    description="That channel doesn't exist in this server.",
+                    color=discord.Color.red()
+                )
+                embed.set_footer(text="Made by Fluxstep")
+                await ctx.author.send(embed=embed)
+                del setup_sessions[user_id]
+                return
+        except ValueError:
+            embed = discord.Embed(
+                title="❌ Invalid Input",
+                description="Please send a valid channel ID (numbers only).",
+                color=discord.Color.red()
+            )
+            embed.set_footer(text="Made by Fluxstep")
+            await ctx.author.send(embed=embed)
+            del setup_sessions[user_id]
+            return
+
+        setup_sessions[user_id]["data"]["general"] = general_id
+
+        # Step 2: Commands Channel
+        embed = discord.Embed(
+            title="🎮 Kaladont Setup - Step 2/3",
+            description="Please send the **Commands Channel ID**",
+            color=discord.Color.blurple()
+        )
+        embed.set_footer(text="Made by Fluxstep")
+        await ctx.author.send(embed=embed)
+
+        msg = await bot.wait_for("message", check=check, timeout=300)
+        try:
+            commands_id = int(msg.content)
+            if not ctx.guild.get_channel(commands_id):
+                embed = discord.Embed(
+                    title="❌ Invalid Channel",
+                    description="That channel doesn't exist in this server.",
+                    color=discord.Color.red()
+                )
+                embed.set_footer(text="Made by Fluxstep")
+                await ctx.author.send(embed=embed)
+                del setup_sessions[user_id]
+                return
+        except ValueError:
+            embed = discord.Embed(
+                title="❌ Invalid Input",
+                description="Please send a valid channel ID (numbers only).",
+                color=discord.Color.red()
+            )
+            embed.set_footer(text="Made by Fluxstep")
+            await ctx.author.send(embed=embed)
+            del setup_sessions[user_id]
+            return
+
+        setup_sessions[user_id]["data"]["commands"] = commands_id
+
+        # Step 3: Game Channel
+        embed = discord.Embed(
+            title="🎮 Kaladont Setup - Step 3/3",
+            description="Please send the **Game Channel ID**",
+            color=discord.Color.blurple()
+        )
+        embed.set_footer(text="Made by Fluxstep")
+        await ctx.author.send(embed=embed)
+
+        msg = await bot.wait_for("message", check=check, timeout=300)
+        try:
+            game_id = int(msg.content)
+            if not ctx.guild.get_channel(game_id):
+                embed = discord.Embed(
+                    title="❌ Invalid Channel",
+                    description="That channel doesn't exist in this server.",
+                    color=discord.Color.red()
+                )
+                embed.set_footer(text="Made by Fluxstep")
+                await ctx.author.send(embed=embed)
+                del setup_sessions[user_id]
+                return
+        except ValueError:
+            embed = discord.Embed(
+                title="❌ Invalid Input",
+                description="Please send a valid channel ID (numbers only).",
+                color=discord.Color.red()
+            )
+            embed.set_footer(text="Made by Fluxstep")
+            await ctx.author.send(embed=embed)
+            del setup_sessions[user_id]
+            return
+
+        setup_sessions[user_id]["data"]["game"] = game_id
+
+        # Save configuration
+        servers[guild_id] = {
+            "general": general_id,
+            "commands": commands_id,
+            "game": game_id
+        }
+        save_servers(servers)
+
+        # Confirmation
+        general_channel = ctx.guild.get_channel(general_id)
+        commands_channel = ctx.guild.get_channel(commands_id)
+        game_channel = ctx.guild.get_channel(game_id)
+
+        embed = discord.Embed(
+            title="✅ Setup Completed!",
+            description="Kaladont is ready to play!",
+            color=discord.Color.green()
+        )
+        embed.add_field(name="General Chat", value=general_channel.mention, inline=False)
+        embed.add_field(name="Commands", value=commands_channel.mention, inline=False)
+        embed.add_field(name="Game", value=game_channel.mention, inline=False)
+        embed.set_footer(text="Made by Fluxstep")
+        await ctx.author.send(embed=embed)
+
+        # Send public message in game channel
+        game_embed = discord.Embed(
+            title="🎮 Kaladont has started!",
+            description="Start with any valid word with at least 4 letters.\n\nNext word must start with the last 2 letters of the previous word.",
+            color=discord.Color.blurple()
+        )
+        game_embed.set_footer(text="Made by Fluxstep")
+        await game_channel.send(embed=game_embed)
+
+        del setup_sessions[user_id]
+
+    except asyncio.TimeoutError:
+        embed = discord.Embed(
+            title="⏰ Setup Timeout",
+            description="Setup took too long. Please try again.",
+            color=discord.Color.orange()
+        )
+        embed.set_footer(text="Made by Fluxstep")
+        await ctx.author.send(embed=embed)
+        if user_id in setup_sessions:
+            del setup_sessions[user_id]
+
+# ================= COMMANDS =================
 
 @bot.command()
 async def reset(ctx):
@@ -872,7 +980,10 @@ async def hint(ctx):
             color=discord.Color.red()
         )
         embed.set_footer(text="Made by Fluxstep")
-        await ctx.author.send(embed=embed)
+        try:
+            await ctx.author.send(embed=embed)
+        except:
+            pass
         await ctx.message.delete()
         return
 
@@ -905,7 +1016,10 @@ async def hint(ctx):
 
     embed.set_footer(text="Made by Fluxstep")
     
-    await ctx.author.send(embed=embed)
+    try:
+        await ctx.author.send(embed=embed)
+    except:
+        pass
     await ctx.message.delete()
 
 @bot.command()
@@ -927,7 +1041,10 @@ async def skip(ctx):
             color=discord.Color.red()
         )
         embed.set_footer(text="Made by Fluxstep")
-        await ctx.author.send(embed=embed)
+        try:
+            await ctx.author.send(embed=embed)
+        except:
+            pass
         await ctx.message.delete()
         return
 
@@ -943,7 +1060,10 @@ async def skip(ctx):
             color=discord.Color.orange()
         )
         embed.set_footer(text="Made by Fluxstep")
-        await ctx.author.send(embed=embed)
+        try:
+            await ctx.author.send(embed=embed)
+        except:
+            pass
         await ctx.message.delete()
         return
 
@@ -960,7 +1080,10 @@ async def skip(ctx):
     embed.add_field(name="Cost", value="**-30 💰**", inline=False)
     embed.set_footer(text="Made by Fluxstep")
 
-    await ctx.author.send(embed=embed)
+    try:
+        await ctx.author.send(embed=embed)
+    except:
+        pass
     await ctx.message.delete()
 
 @bot.command(name="help")
@@ -1062,4 +1185,5 @@ async def top(ctx):
 
 # ================= RUN BOT =================
 
+import asyncio
 bot.run(TOKEN)
