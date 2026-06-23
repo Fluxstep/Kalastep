@@ -915,7 +915,10 @@ async def daily(ctx):
             color=discord.Color.orange()
         )
         embed.set_footer(text="Made by Fluxstep")
-        await ctx.send(embed=embed, ephemeral=True)
+       try:
+    await ctx.author.send(embed=embed)
+except:
+    await ctx.reply("❌ I couldn't DM you. Please enable DMs.", delete_after=5)
         return
 
     claim_daily(guild_id, ctx.author.id)
@@ -927,7 +930,10 @@ async def daily(ctx):
     )
     embed.set_footer(text="Made by Fluxstep")
 
-    await ctx.send(embed=embed, ephemeral=True)
+    try:
+    await ctx.author.send(embed=embed)
+except:
+    await ctx.reply("❌ I couldn't DM you. Please enable DMs.", delete_after=5)
 
 @bot.command()
 async def shop(ctx):
@@ -980,7 +986,10 @@ async def hint(ctx):
             color=discord.Color.red()
         )
         embed.set_footer(text="Made by Fluxstep")
-        await ctx.send(embed=embed, ephemeral=True)
+        try:
+    await ctx.author.send(embed=embed)
+except:
+    await ctx.reply("❌ I couldn't DM you. Please enable DMs.", delete_after=5)
         await ctx.message.delete()
         return
 
@@ -1012,7 +1021,10 @@ async def hint(ctx):
         embed.add_field(name="Cost", value="**-15 💰**", inline=False)
 
     embed.set_footer(text="Made by Fluxstep")
-    await ctx.send(embed=embed, ephemeral=True)
+    try:
+    await ctx.author.send(embed=embed)
+except:
+    await ctx.reply("❌ I couldn't DM you. Please enable DMs.", delete_after=5)
     await ctx.message.delete()
 
 @bot.command()
@@ -1034,7 +1046,10 @@ async def skip(ctx):
             color=discord.Color.red()
         )
         embed.set_footer(text="Made by Fluxstep")
-        await ctx.send(embed=embed, ephemeral=True)
+        try:
+    await ctx.author.send(embed=embed)
+except:
+    await ctx.reply("❌ I couldn't DM you. Please enable DMs.", delete_after=5)
         await ctx.message.delete()
         return
 
@@ -1050,7 +1065,10 @@ async def skip(ctx):
             color=discord.Color.orange()
         )
         embed.set_footer(text="Made by Fluxstep")
-        await ctx.send(embed=embed, ephemeral=True)
+        try:
+    await ctx.author.send(embed=embed)
+except:
+    await ctx.reply("❌ I couldn't DM you. Please enable DMs.", delete_after=5)
         await ctx.message.delete()
         return
 
@@ -1067,7 +1085,10 @@ async def skip(ctx):
     embed.add_field(name="Cost", value="**-30 💰**", inline=False)
     embed.set_footer(text="Made by Fluxstep")
 
-    await ctx.send(embed=embed, ephemeral=True)
+    try:
+    await ctx.author.send(embed=embed)
+except:
+    await ctx.reply("❌ I couldn't DM you. Please enable DMs.", delete_after=5)
     await ctx.message.delete()
 
 @bot.command(name="help")
