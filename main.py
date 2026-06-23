@@ -470,25 +470,22 @@ async def on_message(message):
     guild_id = get_guild_id(message)
     server_config = get_server_channels(guild_id)
 
-   if message.content.startswith("!"):
-    allowed_game_commands = ["!hint", "!skip", "!reset"]
-
-    if (
-        server_config
-        and message.channel.id == server_config["game"]
-        and message.content.split()[0].lower() in allowed_game_commands
-    ):
-        await bot.process_commands(message)
-
-        try:
-            await message.delete()
-        except:
-            pass
-
-        return
-
-    # Handle commands
     if message.content.startswith("!"):
+        allowed_game_commands = ["!hint", "!skip", "!reset"]
+
+        if (
+            server_config
+            and message.channel.id == server_config["game"]
+            and message.content.split()[0].lower() in allowed_game_commands
+        ):
+            await bot.process_commands(message)
+
+            try:
+                await message.delete()
+            except:
+                pass
+            return
+
         await bot.process_commands(message)
         return
 
