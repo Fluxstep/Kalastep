@@ -4,14 +4,9 @@ from dotenv import load_dotenv
 import os
 import json
 from datetime import datetime, timedelta
-from wordfreq import zipf_frequency
-from wordfreq import zipf_frequency
-
-print(zipf_frequency("fork", "en"))
-print(zipf_frequency("onward", "en"))
-print(zipf_frequency("playing", "en"))
 import time
 import random
+import asyncio
 
 # ================= CONFIG =================
 
@@ -98,9 +93,6 @@ def save_daily(data):
     with open(DAILY_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
-def is_real_word(word):
-    return zipf_frequency(word, "en") > 0
-
 servers = load_servers()
 leaderboard = load_leaderboard()
 coins_data = load_coins_data()
@@ -109,7 +101,7 @@ daily_claims = load_daily()
 # ================= GAME STATE =================
 
 game_states = {}
-setup_sessions = {}  # {user_id: {"guild_id": ..., "step": ..., "data": ...}}
+setup_sessions = {}
 
 # ================= DICTIONARY & WORD VALIDATION =================
 
@@ -124,34 +116,153 @@ def load_dictionary():
         word_set = set(word.lower() for word in words.words() if len(word) >= 4)
         print(f"✅ Loaded {len(word_set)} words from NLTK")
         return word_set
-    except
-        dictionary = set()
+    except:
+        print("⚠️ Using fallback dictionary")
+        pass
 
-BAD_ENDINGS = {'rd', 'ng', 'lf', 'mp', 'nk', 'lp', 'ft', 'lm', 'ld', 'lt'}
+    fallback_words = {
+        'able', 'about', 'above', 'abuse', 'access', 'acid', 'across', 'acre', 'act', 'action',
+        'active', 'actor', 'adapt', 'added', 'admit', 'adopt', 'adult', 'advance', 'after',
+        'again', 'against', 'agent', 'agree', 'ahead', 'alarm', 'album', 'alert', 'alien',
+        'align', 'alike', 'alive', 'allow', 'almost', 'alone', 'along', 'alter', 'always',
+        'amateur', 'amazing', 'among', 'amount', 'amuse', 'angel', 'anger', 'angle', 'angry',
+        'animal', 'ankle', 'announce', 'annoy', 'annual', 'answer', 'antenna', 'antic',
+        'anvil', 'anxiety', 'apart', 'apology', 'apparent', 'appeal', 'appear', 'appetite',
+        'apple', 'apply', 'appoint', 'approve', 'april', 'apron', 'arch', 'arctic', 'ardent',
+        'ardor', 'arena', 'argue', 'argument', 'arise', 'army', 'aroma', 'arose', 'around',
+        'arrange', 'array', 'arrest', 'arrival', 'arrive', 'arrow', 'arsenal', 'art', 'artery',
+        'article', 'artist', 'artistic', 'ascend', 'ascent', 'ash', 'ashamed', 'ashen', 'aside',
+        'asked', 'asleep', 'aspect', 'aspire', 'assail', 'assault', 'assemble', 'assent', 'assert',
+        'assess', 'asset', 'assign', 'assist', 'associate', 'assume', 'assurance', 'assure',
+        'astern', 'astonish', 'astound', 'astray', 'astronaut', 'asylum', 'atom', 'atomic',
+        'atone', 'atrocious', 'attach', 'attack', 'attain', 'attempt', 'attend', 'attention',
+        'attest', 'attic', 'attire', 'attitude', 'attorney', 'attract', 'attraction', 'attractive',
+        'attribute', 'auction', 'audacious', 'audience', 'audio', 'audit', 'audition', 'august',
+        'aunt', 'austere', 'authentic', 'author', 'authority', 'authorize', 'autumn', 'auxiliary',
+        'avail', 'available', 'avalanche', 'avarice', 'avenue', 'average', 'averse', 'avert',
+        'avoid', 'await', 'awake', 'awaken', 'award', 'aware', 'away', 'awe', 'awesome', 'awful',
+        'awhile', 'awkward', 'awning', 'awoke', 'awry', 'axiom', 'axis', 'axle', 'axon', 'aye',
+        'azure', 'baby', 'bachelor', 'back', 'backbone', 'background', 'backing', 'backup',
+        'backward', 'bacon', 'bacteria', 'badge', 'badger', 'badly', 'baffle', 'baggage', 'baggy',
+        'bail', 'bait', 'bake', 'baker', 'bakery', 'balance', 'balcony', 'bald', 'baldly', 'bale',
+        'ball', 'ballad', 'ballast', 'ballet', 'balloon', 'ballot', 'ballroom', 'balm', 'balmy',
+        'band', 'bandage', 'bandit', 'bane', 'bang', 'bangle', 'banish', 'banister', 'bank',
+        'banker', 'banking', 'bankrupt', 'banner', 'banquet', 'banter', 'baptism', 'baptize',
+        'bare', 'barely', 'bargain', 'barge', 'bark', 'barley', 'barn', 'barnacle', 'barometer',
+        'baron', 'baroque', 'barracks', 'barrage', 'barrel', 'barren', 'barricade', 'barrier',
+        'barrio', 'barrister', 'bartender', 'barter', 'base', 'baseball', 'basement', 'baseness',
+        'bases', 'basic', 'basin', 'basis', 'bask', 'basket', 'basketball', 'bass', 'bassoon',
+        'batch', 'bath', 'bathe', 'bathroom', 'bathrobe', 'batik', 'baton', 'battalion', 'batten',
+        'batter', 'battery', 'batting', 'battle', 'battlefield', 'battleground', 'battlement',
+        'battleship', 'bauble', 'bawdy', 'bawl', 'beach', 'beacon', 'bead', 'beading', 'beady',
+        'beak', 'beaker', 'beam', 'bean', 'bear', 'bearable', 'beard', 'bearer', 'bearing',
+        'beast', 'beastly', 'beat', 'beaten', 'beater', 'beating', 'beatnik', 'beau', 'beautiful',
+        'beautifully', 'beautify', 'beauty', 'beaver', 'became', 'because', 'beck', 'beckon',
+        'become', 'becoming', 'bed', 'bedaub', 'bedazzle', 'bedbug', 'bedded', 'bedding', 'bedew',
+        'bedfellow', 'bedim', 'bedlam', 'bedpan', 'bedpost', 'bedraggle', 'bedridden', 'bedrock',
+        'bedroom', 'bedside', 'bedsore', 'bedspread', 'bedspring', 'bedstead', 'bedtime', 'bee',
+        'beech', 'beef', 'beefy', 'beehive', 'beekeeper', 'beekeeping', 'beeswax', 'beet', 'beetle',
+        'befall', 'befit', 'befitting', 'befog', 'befool', 'before', 'beforehand', 'befriend',
+        'befuddle', 'beg', 'begat', 'beggar', 'beggary', 'begged', 'begin', 'beginner', 'beginning',
+        'begone', 'begonia', 'begot', 'begotten', 'begrime', 'begrudge', 'begrudging', 'beguile',
+        'beguiling', 'begum', 'begun', 'behalf', 'behave', 'behavior', 'behavioral', 'behead',
+        'behemoth', 'behest', 'behind', 'behindhand', 'behold', 'beholder', 'beholden', 'behoove',
+        'brand', 'bread', 'break', 'breed', 'brief', 'bring', 'broad', 'broke', 'brown',
+        'build', 'buyer', 'cable', 'camel', 'canal', 'candy', 'cargo', 'carry', 'catch',
+        'cause', 'chain', 'chair', 'chart', 'chase', 'cheap', 'check', 'chess', 'chest',
+        'chief', 'child', 'china', 'chose', 'civil', 'claim', 'class', 'clean', 'clear',
+        'click', 'climb', 'clock', 'close', 'cloud', 'coach', 'coast', 'color', 'couch',
+        'could', 'count', 'court', 'cover', 'crack', 'craft', 'crash', 'crazy', 'cream',
+        'crime', 'cross', 'crowd', 'crown', 'cycle', 'daily', 'dance', 'dealt', 'death',
+        'debut', 'delay', 'dense', 'depth', 'diary', 'dirty', 'disco', 'doing', 'doubt',
+        'dozen', 'draft', 'drama', 'drawn', 'dream', 'dress', 'dried', 'drink', 'drive',
+        'drove', 'drown', 'dying', 'eager', 'eagle', 'early', 'earth', 'eight', 'elite',
+        'empty', 'enemy', 'enjoy', 'enter', 'entry', 'equal', 'error', 'event', 'every',
+        'exact', 'exist', 'extra', 'faith', 'false', 'fancy', 'fault', 'field', 'fifth',
+        'fifty', 'fight', 'final', 'first', 'fixed', 'flame', 'flash', 'fleet', 'floor',
+        'fluid', 'focus', 'force', 'forum', 'found', 'frame', 'frank', 'fraud', 'fresh',
+        'fried', 'front', 'frost', 'fruit', 'fully', 'funny', 'games', 'gates', 'ghost',
+        'giant', 'given', 'glass', 'globe', 'going', 'grace', 'grade', 'grain', 'grand',
+        'grant', 'graph', 'grass', 'grave', 'great', 'green', 'gross', 'group', 'grown',
+        'guard', 'guess', 'guest', 'guide', 'guilt', 'habit', 'happy', 'harsh', 'heart',
+        'heavy', 'hedge', 'hello', 'hence', 'hills', 'hints', 'hired', 'hobby', 'holes',
+        'holly', 'homes', 'honey', 'honor', 'horse', 'hotel', 'hours', 'house', 'human',
+        'humid', 'hurry', 'ideal', 'ideas', 'image', 'imply', 'index', 'inner', 'input',
+        'issue', 'items', 'japan', 'jimmy', 'joins', 'joint', 'judge', 'juice', 'jumps',
+        'knife', 'knock', 'known', 'knows', 'label', 'labor', 'lakes', 'large', 'laser',
+        'later', 'laugh', 'layer', 'leads', 'lease', 'least', 'leave', 'legal', 'lemon',
+        'level', 'lewis', 'light', 'liked', 'likes', 'limit', 'links', 'lions', 'lists',
+        'lived', 'lives', 'loads', 'loans', 'lobby', 'local', 'locks', 'lodge', 'logic',
+        'loose', 'lords', 'loses', 'loves', 'lower', 'loyal', 'lucky', 'lunch', 'lying',
+        'macro', 'magic', 'major', 'maker', 'males', 'march', 'marks', 'match', 'mates',
+        'mayor', 'means', 'meant', 'meats', 'media', 'meets', 'menus', 'mercy', 'merge',
+        'merit', 'metal', 'meter', 'micro', 'midst', 'might', 'miles', 'mills', 'minds',
+        'mines', 'minor', 'minus', 'mixed', 'mixes', 'model', 'modes', 'money', 'month',
+        'moral', 'motor', 'mount', 'mouse', 'mouth', 'moved', 'moves', 'movie', 'music',
+        'myths', 'names', 'needs', 'nerve', 'never', 'newly', 'nexus', 'nicer', 'night',
+        'ninth', 'nodes', 'noise', 'norms', 'north', 'noted', 'notes', 'novel', 'nurse',
+        'occur', 'ocean', 'offer', 'often', 'older', 'olive', 'onion', 'onset', 'opens',
+        'opera', 'orbit', 'order', 'organ', 'other', 'ought', 'ounce', 'outer', 'owned',
+        'owner', 'oxide', 'paced', 'packs', 'pages', 'paint', 'pairs', 'panel', 'panic',
+        'pants', 'paper', 'parks', 'parts', 'party', 'patch', 'paths', 'pause', 'peace',
+        'pearl', 'peers', 'penny', 'perch', 'peter', 'phase', 'phone', 'photo', 'piano',
+        'picks', 'piece', 'pipes', 'pitch', 'pizza', 'place', 'plain', 'plane', 'plans',
+        'plant', 'plate', 'plays', 'plaza', 'plots', 'poems', 'poets', 'point', 'poles',
+        'polls', 'pools', 'porch', 'ports', 'posed', 'posts', 'pound', 'power', 'press',
+        'price', 'pride', 'prime', 'print', 'prior', 'prism', 'prize', 'proof', 'proud',
+        'prove', 'prowl', 'prune', 'psalm', 'queen', 'query', 'quest', 'queue', 'quick',
+        'quiet', 'quilt', 'quite', 'quote', 'radio', 'raids', 'rails', 'raise', 'ranch',
+        'range', 'ranks', 'rapid', 'ratio', 'reach', 'react', 'reads', 'ready', 'realm',
+        'rebel', 'refer', 'relax', 'reply', 'rider', 'ridge', 'rifle', 'right', 'rigid',
+        'rings', 'risen', 'risks', 'river', 'roads', 'roast', 'robot', 'rocks', 'roger',
+        'roles', 'roman', 'roofs', 'rooms', 'roost', 'roots', 'ropes', 'roses', 'rough',
+        'round', 'route', 'royal', 'rugby', 'ruins', 'ruled', 'rules', 'rural', 'rusty',
+        'sadly', 'safer', 'saint', 'salad', 'sales', 'salon', 'sandy', 'sauce', 'scale',
+        'scare', 'scene', 'scent', 'scope', 'score', 'scout', 'screw', 'seals', 'seams',
+        'seats', 'seeds', 'seeks', 'seems', 'sells', 'sends', 'sense', 'serve', 'setup',
+        'seven', 'shall', 'shame', 'shape', 'share', 'shark', 'sharp', 'shave', 'sheet',
+        'shelf', 'shell', 'shift', 'shine', 'shirt', 'shock', 'shoes', 'shoot', 'shops',
+        'shore', 'short', 'shots', 'shown', 'shows', 'sight', 'signs', 'silly', 'since',
+        'sixth', 'sized', 'sizes', 'skill', 'skins', 'skips', 'skirt', 'skull', 'slain',
+        'slant', 'slate', 'sleep', 'slide', 'sling', 'slips', 'slope', 'small', 'smart',
+        'smash', 'smell', 'smile', 'smith', 'smoke', 'solid', 'solve', 'songs', 'sorry',
+        'sound', 'south', 'space', 'spare', 'spark', 'speak', 'spear', 'speed', 'spell',
+        'spend', 'spent', 'spice', 'spike', 'spine', 'spoke', 'spoon', 'sport', 'spots',
+        'spray', 'spree', 'staff', 'stage', 'stain', 'stake', 'stale', 'stamp', 'stand',
+        'stank', 'start', 'state', 'stays', 'steak', 'steel', 'steep', 'steer', 'stems',
+        'stern', 'stick', 'still', 'sting', 'stink', 'stock', 'stone', 'stood', 'stool',
+        'store', 'storm', 'story', 'stove', 'strap', 'straw', 'strip', 'stuck', 'study',
+        'stuff', 'stump', 'stung', 'style', 'sugar', 'suite', 'suits', 'sunny', 'super',
+        'surge', 'sweet', 'swift', 'swims', 'swing', 'swiss', 'sword', 'swore', 'sworn',
+        'table', 'taken', 'takes', 'tales', 'talks', 'tanks', 'tapes', 'tasks', 'taste',
+        'taxes', 'teach', 'teams', 'tears', 'tease', 'teeth', 'teens', 'tells', 'tempo',
+        'tends', 'tense', 'tenth', 'terms', 'texas', 'thank', 'theft', 'their', 'theme',
+        'there', 'these', 'thick', 'thing', 'think', 'third', 'those', 'tides', 'tiger',
+        'tight', 'tiled', 'tiles', 'timer', 'times', 'tired', 'toast', 'today', 'token',
+        'tools', 'tooth', 'topic', 'torch', 'total', 'touch', 'tough', 'tours', 'tower',
+        'towns', 'toxic', 'trace', 'track', 'trade', 'trail', 'train', 'trait', 'trash',
+        'tread', 'treat', 'trees', 'trend', 'trial', 'tribe', 'trick', 'tried', 'tries',
+        'troop', 'truck', 'truly', 'trunk', 'trust', 'truth', 'tubes', 'tulip', 'tumor',
+        'turns', 'tusks', 'twice', 'twins', 'twist', 'ultra', 'uncle', 'under', 'unfit',
+        'union', 'unite', 'unity', 'until', 'upper', 'upset', 'urban', 'usage', 'users',
+        'usual', 'valid', 'value', 'valve', 'vapor', 'vault', 'venue', 'verge', 'verse',
+        'video', 'villa', 'virus', 'visit', 'vital', 'vivid', 'vocal', 'voice', 'voter',
+        'votes', 'vowed', 'wages', 'wagon', 'waist', 'walks', 'walls', 'wants', 'wards',
+        'wares', 'warns', 'waste', 'watch', 'water', 'waves', 'weary', 'weave', 'weeks',
+        'weigh', 'weird', 'wells', 'welsh', 'wheat', 'wheel', 'where', 'which', 'while',
+        'white', 'whole', 'whose', 'widen', 'wider', 'widow', 'width', 'winds', 'wines',
+        'wings', 'wired', 'wires', 'wives', 'woman', 'women', 'woods', 'words', 'works',
+        'world', 'worry', 'worse', 'worst', 'worth', 'would', 'wound', 'wrist', 'write',
+        'wrong', 'wrote', 'yards', 'years', 'yells', 'yield', 'young', 'yours', 'youth',
+        'zebra', 'zones', 'zoned', 'zoom', 'zoomed', 'zooming', 'online', 'playing', 'flower',
+        'mountain', 'discord', 'python', 'server', 'channel', 'message', 'player', 'winner'
+    }
 
-def load_dictionary():
-    """Load English dictionary safely"""
-    global dictionary
+    print(f"✅ Loaded {len(fallback_words)} words from fallback dictionary")
+    return fallback_words
 
-    try:
-        import nltk
-        nltk.download('words', quiet=True)
-        from nltk.corpus import words
+dictionary = load_dictionary()
 
-        dictionary = set(w.lower() for w in words.words() if len(w) >= 4)
-
-        print(f"✅ Loaded {len(dictionary)} words from NLTK")
-
-    except Exception as e:
-        print(f"⚠️ NLTK failed: {e}")
-
-        # SAFE fallback (prevents crash)
-        dictionary = {
-            "fork", "onward", "playing", "discord", "python",
-            "server", "channel", "message", "world", "game"
-        }
-
-        print(f"⚠️ Using fallback dictionary ({len(dictionary)} words)")
 # ================= HELPER FUNCTIONS =================
 
 def get_guild_id(ctx_or_message):
@@ -187,12 +298,12 @@ def init_game_state(guild_id):
 def is_valid_word(word):
     """Check if word is valid"""
     if not word.isalpha():
-        return False
+        return False, "❌ Words must contain only letters (A-Z)"
     if len(word) < 4:
-        return False
+        return False, "❌ Minimum length is 4 letters"
     if word not in dictionary:
-        return False
-    return True
+        return False, "❌ Invalid English word"
+    return True, "Valid"
 
 def has_bad_ending(word):
     """Check if word ends with bad ending"""
@@ -348,7 +459,6 @@ async def on_command_error(ctx, error):
         return
     if isinstance(error, commands.MissingRequiredArgument):
         return
-    # Ignore other errors silently to prevent spam
 
 @bot.event
 async def on_message(message):
@@ -359,6 +469,15 @@ async def on_message(message):
 
     guild_id = get_guild_id(message)
     server_config = get_server_channels(guild_id)
+
+    # DELETE ALL ! MESSAGES IN GAME CHANNEL
+    if server_config and message.channel.id == server_config["game"]:
+        if message.content.startswith("!"):
+            try:
+                await message.delete()
+            except:
+                pass
+            return
 
     # Handle commands
     if message.content.startswith("!"):
@@ -387,31 +506,21 @@ async def on_message(message):
     if message.channel.id != server_config["game"]:
         return
 
-    # DELETE ALL MESSAGES STARTING WITH ! (commands in game channel)
-    if message.content.startswith("!"):
-        try:
-            await message.delete()
-        except:
-            pass
-        return
-
     init_game_state(guild_id)
     state = game_states[guild_id]
 
     word = message.content.lower().strip()
 
     # Validate word
-    if not is_valid_word(word):
+    is_valid, error_msg = is_valid_word(word)
+    if not is_valid:
         embed = discord.Embed(
-            title="❌ Invalid Word",
-            description=f"**{word}** is not a valid English word.",
+            title=error_msg,
             color=discord.Color.red()
         )
         embed.set_footer(text="Made by Fluxstep")
-        try:
-            await message.author.send(embed=embed)
-        except:
-            pass
+        
+        msg = await message.channel.send(embed=embed, delete_after=3)
         await message.delete()
         return
 
@@ -423,25 +532,21 @@ async def on_message(message):
             color=discord.Color.red()
         )
         embed.set_footer(text="Made by Fluxstep")
-        try:
-            await message.author.send(embed=embed)
-        except:
-            pass
+        
+        msg = await message.channel.send(embed=embed, delete_after=3)
         await message.delete()
         return
 
     # Check same player twice
     if state['last_user'] == message.author.id:
         embed = discord.Embed(
-            title="❌ Same Player Twice",
+            title="❌ You Cannot Play Twice",
             description="You can't play twice in a row!",
             color=discord.Color.red()
         )
         embed.set_footer(text="Made by Fluxstep")
-        try:
-            await message.author.send(embed=embed)
-        except:
-            pass
+        
+        msg = await message.channel.send(embed=embed, delete_after=3)
         await message.delete()
         return
 
@@ -453,10 +558,8 @@ async def on_message(message):
             color=discord.Color.red()
         )
         embed.set_footer(text="Made by Fluxstep")
-        try:
-            await message.author.send(embed=embed)
-        except:
-            pass
+        
+        msg = await message.channel.send(embed=embed, delete_after=3)
         await message.delete()
         return
 
@@ -474,14 +577,12 @@ async def on_message(message):
         if not chain_match:
             embed = discord.Embed(
                 title="❌ Chain Rule Broken",
-                description=f"**{word}** must start with **{last_two}**",
+                description=f"**{word}** must start with **{last_two}** (or fallback: **{state['last_word'][-1:]}**)",
                 color=discord.Color.red()
             )
             embed.set_footer(text="Made by Fluxstep")
-            try:
-                await message.author.send(embed=embed)
-            except:
-                pass
+            
+            msg = await message.channel.send(embed=embed, delete_after=3)
             await message.delete()
             return
 
@@ -506,12 +607,11 @@ async def on_message(message):
     except:
         pass
 
-# ================= SETUP COMMAND (PREFIX) =================
+# ================= SETUP COMMAND =================
 
 @bot.command()
 async def setup(ctx):
     """Setup Kaladont for this server [KalaOwner only]"""
-    # Check permissions
     if ctx.author != ctx.guild.owner:
         kala_owner_role = discord.utils.get(ctx.guild.roles, name="KalaOwner")
         if not kala_owner_role or kala_owner_role not in ctx.author.roles:
@@ -528,7 +628,6 @@ async def setup(ctx):
             await ctx.message.delete()
             return
 
-    # Start setup session
     user_id = ctx.author.id
     guild_id = str(ctx.guild.id)
 
@@ -552,7 +651,6 @@ async def setup(ctx):
 
     await ctx.message.delete()
 
-    # Wait for response
     def check(m):
         return m.author == ctx.author and m.guild is None
 
@@ -662,7 +760,6 @@ async def setup(ctx):
         }
         save_servers(servers)
 
-        # Confirmation
         general_channel = ctx.guild.get_channel(general_id)
         commands_channel = ctx.guild.get_channel(commands_id)
         game_channel = ctx.guild.get_channel(game_id)
@@ -678,7 +775,6 @@ async def setup(ctx):
         embed.set_footer(text="Made by Fluxstep")
         await ctx.author.send(embed=embed)
 
-        # Send public message in game channel
         game_embed = discord.Embed(
             title="🎮 Kaladont has started!",
             description="Start with any valid word with at least 4 letters.\n\nNext word must start with the last 2 letters of the previous word.",
@@ -853,7 +949,7 @@ async def shop(ctx):
 
 @bot.command()
 async def hint(ctx):
-    """Get a hint"""
+    """Get a hint [EPHEMERAL]"""
     guild_id = get_guild_id(ctx)
     server_config = get_server_channels(guild_id)
 
@@ -870,10 +966,7 @@ async def hint(ctx):
             color=discord.Color.red()
         )
         embed.set_footer(text="Made by Fluxstep")
-        try:
-            await ctx.author.send(embed=embed)
-        except:
-            pass
+        await ctx.send(embed=embed, ephemeral=True)
         await ctx.message.delete()
         return
 
@@ -905,16 +998,12 @@ async def hint(ctx):
         embed.add_field(name="Cost", value="**-15 💰**", inline=False)
 
     embed.set_footer(text="Made by Fluxstep")
-    
-    try:
-        await ctx.author.send(embed=embed)
-    except:
-        pass
+    await ctx.send(embed=embed, ephemeral=True)
     await ctx.message.delete()
 
 @bot.command()
 async def skip(ctx):
-    """Skip chain"""
+    """Skip chain [EPHEMERAL]"""
     guild_id = get_guild_id(ctx)
     server_config = get_server_channels(guild_id)
 
@@ -931,10 +1020,7 @@ async def skip(ctx):
             color=discord.Color.red()
         )
         embed.set_footer(text="Made by Fluxstep")
-        try:
-            await ctx.author.send(embed=embed)
-        except:
-            pass
+        await ctx.send(embed=embed, ephemeral=True)
         await ctx.message.delete()
         return
 
@@ -950,10 +1036,7 @@ async def skip(ctx):
             color=discord.Color.orange()
         )
         embed.set_footer(text="Made by Fluxstep")
-        try:
-            await ctx.author.send(embed=embed)
-        except:
-            pass
+        await ctx.send(embed=embed, ephemeral=True)
         await ctx.message.delete()
         return
 
@@ -970,10 +1053,7 @@ async def skip(ctx):
     embed.add_field(name="Cost", value="**-30 💰**", inline=False)
     embed.set_footer(text="Made by Fluxstep")
 
-    try:
-        await ctx.author.send(embed=embed)
-    except:
-        pass
+    await ctx.send(embed=embed, ephemeral=True)
     await ctx.message.delete()
 
 @bot.command(name="help")
@@ -1075,5 +1155,4 @@ async def top(ctx):
 
 # ================= RUN BOT =================
 
-import asyncio
 bot.run(TOKEN)
