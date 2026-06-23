@@ -470,14 +470,22 @@ async def on_message(message):
     guild_id = get_guild_id(message)
     server_config = get_server_channels(guild_id)
 
-    # DELETE ALL ! MESSAGES IN GAME CHANNEL
-    if server_config and message.channel.id == server_config["game"]:
-        if message.content.startswith("!"):
-            try:
-                await message.delete()
-            except:
-                pass
-            return
+   if message.content.startswith("!"):
+    allowed_game_commands = ["!hint", "!skip", "!reset"]
+
+    if (
+        server_config
+        and message.channel.id == server_config["game"]
+        and message.content.split()[0].lower() in allowed_game_commands
+    ):
+        await bot.process_commands(message)
+
+        try:
+            await message.delete()
+        except:
+            pass
+
+        return
 
     # Handle commands
     if message.content.startswith("!"):
@@ -800,7 +808,15 @@ async def setup(ctx):
 
 @bot.command()
 async def reset(ctx):
-    """Reset the game"""
+
+    kala_role = discord.utils.get(ctx.guild.roles, name="KalaOwner")
+
+    if ctx.author != ctx.guild.owner and (
+        kala_role is None or kala_role not in ctx.author.roles
+    ):
+        await ctx.message.delete()
+        return
+
     guild_id = get_guild_id(ctx)
     server_config = get_server_channels(guild_id)
 
@@ -819,6 +835,7 @@ async def reset(ctx):
         title="✅ Game Reset",
         description="Kaladont has been reset!",
         color=discord.Color.green()
+    
     )
     embed.set_footer(text="Made by Fluxstep")
 
