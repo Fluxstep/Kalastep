@@ -5,6 +5,11 @@ import os
 import json
 from datetime import datetime, timedelta
 from wordfreq import zipf_frequency
+from wordfreq import zipf_frequency
+
+print(zipf_frequency("fork", "en"))
+print(zipf_frequency("onward", "en"))
+print(zipf_frequency("playing", "en"))
 import time
 import random
 
@@ -93,8 +98,8 @@ def save_daily(data):
     with open(DAILY_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
-def is_valid_word(word):
-    return zipf_frequency(word, 'en') > 1
+def is_real_word(word):
+    return zipf_frequency(word, "en") > 0
 
 servers = load_servers()
 leaderboard = load_leaderboard()
