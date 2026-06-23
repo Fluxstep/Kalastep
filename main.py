@@ -935,7 +935,7 @@ if has_claimed_daily(guild_id, ctx.author.id):
     try:
         await ctx.author.send(embed=embed)
     except:
-    await ctx.reply("❌ I couldn't DM you. Please enable DMs.", delete_after=5)
+        await ctx.reply("❌ I couldn't DM you. Please enable DMs.", delete_after=5)
 
 @bot.command()
 async def shop(ctx):
