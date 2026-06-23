@@ -124,7 +124,34 @@ def load_dictionary():
         word_set = set(word.lower() for word in words.words() if len(word) >= 4)
         print(f"✅ Loaded {len(word_set)} words from NLTK")
         return word_set
-        
+    except
+        dictionary = set()
+
+BAD_ENDINGS = {'rd', 'ng', 'lf', 'mp', 'nk', 'lp', 'ft', 'lm', 'ld', 'lt'}
+
+def load_dictionary():
+    """Load English dictionary safely"""
+    global dictionary
+
+    try:
+        import nltk
+        nltk.download('words', quiet=True)
+        from nltk.corpus import words
+
+        dictionary = set(w.lower() for w in words.words() if len(w) >= 4)
+
+        print(f"✅ Loaded {len(dictionary)} words from NLTK")
+
+    except Exception as e:
+        print(f"⚠️ NLTK failed: {e}")
+
+        # SAFE fallback (prevents crash)
+        dictionary = {
+            "fork", "onward", "playing", "discord", "python",
+            "server", "channel", "message", "world", "game"
+        }
+
+        print(f"⚠️ Using fallback dictionary ({len(dictionary)} words)")
 # ================= HELPER FUNCTIONS =================
 
 def get_guild_id(ctx_or_message):
