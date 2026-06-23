@@ -908,23 +908,24 @@ async def daily(ctx):
         return
 
     if has_claimed_daily(guild_id, ctx.author.id):
-        remaining = get_remaining_daily_time(guild_id, ctx.author.id)
-        embed = discord.Embed(
-            title="⏳ Already Claimed",
-            description=f"Time remaining: **{remaining}**",
-            color=discord.Color.orange()
-        )
-   embed.set_footer(text="Made by Fluxstep")
+    remaining = get_remaining_daily_time(guild_id, ctx.author.id)
 
-try:
-    await ctx.author.send(embed=embed)
-except:
-    await ctx.reply(
-        "❌ I couldn't DM you. Please enable DMs.",
-        delete_after=5
+    embed = discord.Embed(
+        title="⏳ Already Claimed",
+        description=f"Time remaining: **{remaining}**",
+        color=discord.Color.orange()
     )
+    embed.set_footer(text="Made by Fluxstep")
 
-return
+    try:
+        await ctx.author.send(embed=embed)
+    except:
+        await ctx.reply(
+            "❌ I couldn't DM you. Please enable DMs.",
+            delete_after=5
+        )
+
+    return
 
     claim_daily(guild_id, ctx.author.id)
 
