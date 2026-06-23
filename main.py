@@ -902,12 +902,7 @@ async def daily(ctx):
     """Claim daily reward"""
     guild_id = get_guild_id(ctx)
     server_config = get_server_channels(guild_id)
-
-    if not server_config or ctx.channel.id != server_config["commands"]:
-        await ctx.message.delete()
-        return
-
-    if has_claimed_daily(guild_id, ctx.author.id):
+if has_claimed_daily(guild_id, ctx.author.id):
     remaining = get_remaining_daily_time(guild_id, ctx.author.id)
 
     embed = discord.Embed(
@@ -915,6 +910,7 @@ async def daily(ctx):
         description=f"Time remaining: **{remaining}**",
         color=discord.Color.orange()
     )
+
     embed.set_footer(text="Made by Fluxstep")
 
     try:
