@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import os
 import json
 from datetime import datetime, timedelta
+from wordfreq import zipf_frequency
 import time
 import random
 
@@ -91,6 +92,9 @@ def load_daily():
 def save_daily(data):
     with open(DAILY_FILE, "w") as f:
         json.dump(data, f, indent=4)
+
+def is_valid_word(word):
+    return zipf_frequency(word, 'en') > 1
 
 servers = load_servers()
 leaderboard = load_leaderboard()
