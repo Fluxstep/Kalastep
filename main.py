@@ -988,50 +988,86 @@ async def hint(ctx):
             color=discord.Color.red()
         )
         embed.set_footer(text="Made by Fluxstep")
-try:
-    await ctx.author.send(embed=embed)
-except:
-    await ctx.reply("❌ I couldn't DM you. Please enable DMs.", delete_after=5)
-    await ctx.message.delete()
-return
 
-remove_coins(guild_id, ctx.author.id, 15)
+        try:
+            await ctx.author.send(embed=embed)
+        except:
+            await ctx.reply(
+                "❌ I couldn't DM you. Please enable DMs.",
+                delete_after=5
+            )
+
+        await ctx.message.delete()
+        return
+
+    remove_coins(guild_id, ctx.author.id, 15)
 
     init_game_state(guild_id)
     state = game_states[guild_id]
-    hint_word = get_hint_word(state['last_word'], state['used_words'])
+
+    hint_word = get_hint_word(
+        state['last_word'],
+        state['used_words']
+    )
+
+    embed = discord.Embed(
+        title="💡 Hint",
+        color=discord.Color.yellow()
+    )
 
     if state['last_word']:
         last_two = state['last_word'][-2:]
         suggested = hint_word if hint_word else "No words available"
-        
-        embed = discord.Embed(
-            title="💡 Hint",
-            color=discord.Color.yellow()
+
+        embed.add_field(
+            name="Required",
+            value=f"**{last_two}** (or fallback: **{state['last_word'][-1:]}**)",
+            inline=False
         )
-        embed.add_field(name="Required", value=f"**{last_two}** (or fallback: **{state['last_word'][-1:]}**)", inline=False)
-        embed.add_field(name="Suggested Word", value=f"**{suggested}**", inline=False)
-        embed.add_field(name="Cost", value="**-15 💰**", inline=False)
+
+        embed.add_field(
+            name="Suggested Word",
+            value=f"**{suggested}**",
+            inline=False
+        )
+
     else:
         suggested = hint_word if hint_word else "..."
-        embed = discord.Embed(
-            title="💡 Hint",
-            color=discord.Color.yellow()
+
+        embed.add_field(
+            name="Description",
+            value="Start the game with any 4+ letter word!",
+            inline=False
         )
-        embed.add_field(name="Description", value="Start the game with any 4+ letter word!", inline=False)
-        embed.add_field(name="Suggested Word", value=f"**{suggested}**", inline=False)
-        embed.add_field(name="Cost", value="**-15 💰**", inline=False)
+
+        embed.add_field(
+            name="Suggested Word",
+            value=f"**{suggested}**",
+            inline=False
+        )
+
+    embed.add_field(
+        name="Cost",
+        value="**-15 💰**",
+        inline=False
+    )
 
     embed.set_footer(text="Made by Fluxstep")
-    try:
-    await ctx.author.send(embed=embed)
-except:
-    await ctx.reply("❌ I couldn't DM you. Please enable DMs.", delete_after=5)
-    await ctx.message.delete()
 
+    try:
+        await ctx.author.send(embed=embed)
+    except:
+        await ctx.reply(
+            "❌ I couldn't DM you. Please enable DMs.",
+            delete_after=5
+        )
+
+    await ctx.message.delete()
+    
 @bot.command()
 async def skip(ctx):
     """Skip chain [EPHEMERAL]"""
+
     guild_id = get_guild_id(ctx)
     server_config = get_server_channels(guild_id)
 
@@ -1047,11 +1083,17 @@ async def skip(ctx):
             description=f"You need **30 💰** to skip.\n\nYour balance: **{user_coins} 💰**",
             color=discord.Color.red()
         )
+
         embed.set_footer(text="Made by Fluxstep")
+
         try:
-    await ctx.author.send(embed=embed)
-except:
-    await ctx.reply("❌ I couldn't DM you. Please enable DMs.", delete_after=5)
+            await ctx.author.send(embed=embed)
+        except:
+            await ctx.reply(
+                "❌ I couldn't DM you. Please enable DMs.",
+                delete_after=5
+            )
+
         await ctx.message.delete()
         return
 
@@ -1066,15 +1108,22 @@ except:
             description="The game hasn't started yet!",
             color=discord.Color.orange()
         )
+
         embed.set_footer(text="Made by Fluxstep")
+
         try:
-    await ctx.author.send(embed=embed)
-except:
-    await ctx.reply("❌ I couldn't DM you. Please enable DMs.", delete_after=5)
+            await ctx.author.send(embed=embed)
+        except:
+            await ctx.reply(
+                "❌ I couldn't DM you. Please enable DMs.",
+                delete_after=5
+            )
+
         await ctx.message.delete()
         return
 
     old_ending = state['last_word'][-2:]
+
     state['last_word'] = None
     state['last_user'] = None
 
@@ -1082,20 +1131,41 @@ except:
         title="⏭️ Chain Skipped",
         color=discord.Color.orange()
     )
-    embed.add_field(name="Previous Ending", value=f"**{old_ending}**", inline=False)
-    embed.add_field(name="Status", value="Chain requirement has been cleared.", inline=False)
-    embed.add_field(name="Cost", value="**-30 💰**", inline=False)
+
+    embed.add_field(
+        name="Previous Ending",
+        value=f"**{old_ending}**",
+        inline=False
+    )
+
+    embed.add_field(
+        name="Status",
+        value="Chain requirement has been cleared.",
+        inline=False
+    )
+
+    embed.add_field(
+        name="Cost",
+        value="**-30 💰**",
+        inline=False
+    )
+
     embed.set_footer(text="Made by Fluxstep")
 
     try:
-    await ctx.author.send(embed=embed)
-except:
-    await ctx.reply("❌ I couldn't DM you. Please enable DMs.", delete_after=5)
-    await ctx.message.delete()
+        await ctx.author.send(embed=embed)
+    except:
+        await ctx.reply(
+            "❌ I couldn't DM you. Please enable DMs.",
+            delete_after=5
+        )
 
+    await ctx.message.delete()
+    
 @bot.command(name="help")
 async def help_command(ctx):
     """Show help"""
+
     guild_id = get_guild_id(ctx)
     server_config = get_server_channels(guild_id)
 
@@ -1110,48 +1180,59 @@ async def help_command(ctx):
 
     embed.add_field(
         name="🎮 How to Play",
-        value="• Type a 4+ letter English word in the game channel\n"
-              "• Next word must start with the last 2 letters\n"
-              "• If no valid words exist, fallback to last 1 letter\n"
-              "• Can't play twice in a row\n"
-              "• Can't repeat words\n"
-              "• Earn +1 💰 per valid word",
+        value=(
+            "• Type a 4+ letter English word in the game channel\n"
+            "• Next word must start with the last 2 letters\n"
+            "• If no valid words exist, fallback to last 1 letter\n"
+            "• Can't play twice in a row\n"
+            "• Can't repeat words\n"
+            "• Earn +1 💰 per valid word"
+        ),
         inline=False
     )
 
     embed.add_field(
         name="💰 Coin System",
-        value="• Earn **+1 💰** per valid word in game channel\n"
-              "• Earn **+1 💰** per message in general chat\n"
-              "• Earn **+25 💰** daily with `!daily`",
+        value=(
+            "• Earn **+1 💰** per valid word in game channel\n"
+            "• Earn **+1 💰** per message in general chat\n"
+            "• Earn **+25 💰** daily with `!daily`"
+        ),
         inline=False
     )
 
     embed.add_field(
         name="⚙️ Commands (COMMANDS CHANNEL)",
-        value="• `!help` - Show this menu\n"
-              "• `!top` - View leaderboard\n"
-              "• `!stats [member]` - Show player stats\n"
-              "• `!wallet` - Check your coins\n"
-              "• `!daily` - Claim daily 25 coins\n"
-              "• `!shop` - View shop",
+        value=(
+            "• `!help` - Show this menu\n"
+            "• `!top` - View leaderboard\n"
+            "• `!stats [member]` - Show player stats\n"
+            "• `!wallet` - Check your coins\n"
+            "• `!daily` - Claim daily 25 coins\n"
+            "• `!shop` - View shop"
+        ),
         inline=False
     )
 
     embed.add_field(
         name="🎯 Game Commands (GAME CHANNEL)",
-        value="• `!hint` - Buy a hint (**15 💰**)\n"
-              "• `!skip` - Skip chain (**30 💰**)\n"
-              "• `!reset` - Reset the game",
+        value=(
+            "• `!hint` - Buy a hint (**15 💰**)\n"
+            "• `!skip` - Skip chain (**30 💰**)\n"
+            "• `!reset` - Reset the game"
+        ),
         inline=False
     )
 
     embed.set_footer(text="Made by Fluxstep")
+
     await ctx.send(embed=embed)
+
 
 @bot.command()
 async def top(ctx):
     """Show leaderboard"""
+
     guild_id = get_guild_id(ctx)
     server_config = get_server_channels(guild_id)
 
@@ -1167,28 +1248,44 @@ async def top(ctx):
             description="Nobody has played yet!",
             color=discord.Color.gold()
         )
+
         embed.set_footer(text="Made by Fluxstep")
+
         await ctx.send(embed=embed)
         return
 
-    sorted_scores = sorted(guild_leaderboard.items(), key=lambda x: x[1], reverse=True)
+    sorted_scores = sorted(
+        guild_leaderboard.items(),
+        key=lambda x: x[1],
+        reverse=True
+    )
 
     medals = ["🥇", "🥈", "🥉"]
     desc = ""
 
     for i, (uid, count) in enumerate(sorted_scores[:10]):
         rank = medals[i] if i < 3 else f"#{i+1}"
+
         user_coins = get_user_coins(guild_id, int(uid))
-        desc += f"{rank} <@{uid}> — **{count}** words • **{user_coins} 💰**\n"
+
+        desc += (
+            f"{rank} <@{uid}> — "
+            f"**{count}** words • "
+            f"**{user_coins} 💰**\n"
+        )
 
     embed = discord.Embed(
         title="🏆 Kaladont Leaderboard",
         description=desc,
         color=discord.Color.gold()
     )
-    embed.set_footer(text="Made by Fluxstep | Per-Server Leaderboard")
+
+    embed.set_footer(
+        text="Made by Fluxstep | Per-Server Leaderboard"
+    )
 
     await ctx.send(embed=embed)
+
 
 # ================= RUN BOT =================
 
