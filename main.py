@@ -699,18 +699,18 @@ async def setup(ctx):
 
     if ctx.author != ctx.guild.owner:
 
-    kala_owner_role = discord.utils.get(
-        ctx.guild.roles,
-        name="KalaOwner"
-    )
-
-    if not kala_owner_role or kala_owner_role not in ctx.author.roles:
-
-        embed = discord.Embed(
-            title="❌ Permission Denied",
-            description="Only KalaOwner can use this command.",
-            color=discord.Color.red()
+        kala_owner_role = discord.utils.get(
+            ctx.guild.roles,
+            name="KalaOwner"
         )
+
+        if not kala_owner_role or kala_owner_role not in ctx.author.roles:
+
+            embed = discord.Embed(
+                title="❌ Permission Denied",
+                description="Only KalaOwner can use this command.",
+                color=discord.Color.red()
+            )
 
         embed.set_footer(text="Made by Fluxstep")
 
