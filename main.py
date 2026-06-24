@@ -722,9 +722,9 @@ async def setup(ctx):
         await ctx.message.delete()
         return
 
-guild_id = str(ctx.guild.id)
+    guild_id = str(ctx.guild.id)
 
-await ctx.message.delete()
+    await ctx.message.delete()
 
 def check(m):
     return m.author == ctx.author and m.guild is None
