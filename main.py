@@ -487,7 +487,13 @@ async def on_message(message):
     # Process commands first
     if message.content.startswith("_"):
 
-        allowed_game_commands = ["_hint", "_skip", "_reset"]
+        allowed_game_commands = [
+    "_hint",
+    "_skip",
+    "_reset",
+    "_start",
+    "_stop"
+]
 
         if (
             server_config
@@ -1342,6 +1348,13 @@ async def stop(ctx):
 
     init_game_state(guild_id)
     state = game_states[guild_id]
+
+    if not state["active"]:
+    try:
+        await message.delete()
+    except:
+        pass
+    return
 
     state["active"] = False
 
