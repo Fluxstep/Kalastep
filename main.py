@@ -33,77 +33,44 @@ bot = commands.Bot(
 
 # ================= FILES =================
 
-SERVERS_FILE = "servers.json"
-LEADERBOARD_FILE = "leaderboard.json"
-COINS_FILE = "coins.json"
-DAILY_FILE = "daily.json"
+cur.execute("""
+CREATE TABLE IF NOT EXISTS servers(
+guild_id TEXT PRIMARY KEY,
+general BIGINT,
+commands BIGINT,
+game BIGINT
+)
+""")
 
-# ================= AUTO-CREATE FILES =================
+cur.execute("""
+CREATE TABLE IF NOT EXISTS leaderboard(
+guild_id TEXT,
+user_id TEXT,
+score INTEGER DEFAULT 0,
+PRIMARY KEY(guild_id,user_id)
+)
+""")
 
-def ensure_file_exists(filename):
-    """Create file if it doesn't exist"""
-    if not os.path.exists(filename):
-        with open(filename, "w") as f:
-            json.dump({}, f, indent=4)
-        print(f"✅ Created {filename}")
-    else:
-        print(f"✅ Found {filename}")
+cur.execute("""
+CREATE TABLE IF NOT EXISTS coins(
+guild_id TEXT,
+user_id TEXT,
+coins INTEGER DEFAULT 0,
+PRIMARY KEY(guild_id,user_id)
+)
+""")
 
-ensure_file_exists(SERVERS_FILE)
-ensure_file_exists(LEADERBOARD_FILE)
-ensure_file_exists(COINS_FILE)
-ensure_file_exists(DAILY_FILE)
+cur.execute("""
+CREATE TABLE IF NOT EXISTS daily(
+guild_id TEXT,
+user_id TEXT,
+last_claim TIMESTAMP,
+PRIMARY KEY(guild_id,user_id)
+)
+""")
 
-# ================= LOAD DATA =================
+conn.commit()
 
-def load_servers():
-    try:
-        with open(SERVERS_FILE, "r") as f:
-            return json.load(f)
-    except:
-        return {}
-
-def save_servers(data):
-    with open(SERVERS_FILE, "w") as f:
-        json.dump(data, f, indent=4)
-
-def load_leaderboard():
-    try:
-        with open(LEADERBOARD_FILE, "r") as f:
-            return json.load(f)
-    except:
-        return {}
-
-def save_leaderboard(data):
-    with open(LEADERBOARD_FILE, "w") as f:
-        json.dump(data, f, indent=4)
-
-def load_coins_data():
-    try:
-        with open(COINS_FILE, "r") as f:
-            return json.load(f)
-    except:
-        return {}
-
-def save_coins_data(data):
-    with open(COINS_FILE, "w") as f:
-        json.dump(data, f, indent=4)
-
-def load_daily():
-    try:
-        with open(DAILY_FILE, "r") as f:
-            return json.load(f)
-    except:
-        return {}
-
-def save_daily(data):
-    with open(DAILY_FILE, "w") as f:
-        json.dump(data, f, indent=4)
-
-servers = load_servers()
-leaderboard = load_leaderboard()
-coins_data = load_coins_data()
-daily_claims = load_daily()
 
 # ================= GAME STATE =================
 
