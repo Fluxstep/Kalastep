@@ -1346,12 +1346,12 @@ async def stop(ctx):
         await ctx.message.delete()
         return
 
-    init_game_state(guild_id)
-    state = game_states[guild_id]
+   init_game_state(guild_id)
+state = game_states[guild_id]
 
-    if not state["active"]:
-        try:
-            await message.delete()
+if not state["active"]:
+    try:
+        await message.delete()
     except:
         pass
     return
