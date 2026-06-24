@@ -728,99 +728,96 @@ async def setup(ctx):
             "🎮 Kaladont Setup - Step 3/3\nGame Channels"
         )
 
+        servers[guild_id] = {
+            "general": general_ids,
+            "commands": commands_ids,
+            "game": game_ids
+        }
 
-    servers[guild_id] = {
-        "general": general_ids,
-        "commands": commands_ids,
-        "game": game_ids
-    }
+        save_servers(servers)
 
-    save_servers(servers)
+        embed = discord.Embed(
+            title="✅ Setup Completed!",
+            description="Kaladont is ready to play!",
+            color=discord.Color.green()
+        )
 
-    embed = discord.Embed(
-        title="✅ Setup Completed!",
-        description="Kaladont is ready to play!",
-        color=discord.Color.green()
-    )
+        embed.add_field(
+            name="General",
+            value="\n".join(
+                ctx.guild.get_channel(i).mention
+                for i in general_ids
+            ),
+            inline=False
+        )
 
-    embed.add_field(
-        name="General",
-        value="\n".join(
-            ctx.guild.get_channel(i).mention
-            for i in general_ids
-        ),
-        inline=False
-    )
+        embed.add_field(
+            name="Commands",
+            value="\n".join(
+                ctx.guild.get_channel(i).mention
+                for i in commands_ids
+            ),
+            inline=False
+        )
 
-    embed.add_field(
-        name="Commands",
-        value="\n".join(
-            ctx.guild.get_channel(i).mention
-            for i in commands_ids
-        ),
-        inline=False
-    )
+        embed.add_field(
+            name="Game",
+            value="\n".join(
+                ctx.guild.get_channel(i).mention
+                for i in game_ids
+            ),
+            inline=False
+        )
 
-    embed.add_field(
-        name="Game",
-        value="\n".join(
-            ctx.guild.get_channel(i).mention
-            for i in game_ids
-        ),
-        inline=False
-    )
+        embed.set_footer(text="Made by Fluxstep")
 
-    embed.set_footer(text="Made by Fluxstep")
+        await ctx.author.send(embed=embed)
 
-    await ctx.author.send(embed=embed)
+        start_embed = discord.Embed(
+            title="🎮 Kaladont has started!",
+            description=(
+                "Start with any valid word with at least 4 letters.\n\n"
+                "Next word must start with the last 2 letters "
+                "of the previous word."
+            ),
+            color=discord.Color.blurple()
+        )
 
-    start_embed = discord.Embed(
-        title="🎮 Kaladont has started!",
-        description=(
-            "Start with any valid word with at least 4 letters.\n\n"
-            "Next word must start with the last 2 letters "
-            "of the previous word."
-        ),
-        color=discord.Color.blurple()
-    )
+        start_embed.set_footer(text="Made by Fluxstep")
 
-    start_embed.set_footer(text="Made by Fluxstep")
+        for channel_id in game_ids:
+            channel = ctx.guild.get_channel(channel_id)
 
-    for channel_id in game_ids:
+            if channel:
+                await channel.send(embed=start_embed)
 
-        channel = ctx.guild.get_channel(channel_id)
+    except ValueError:
 
-        if channel:
-            await channel.send(embed=start_embed)
+        embed = discord.Embed(
+            title="❌ Invalid Channel",
+            description=(
+                "Please send valid channel IDs.\n\n"
+                "Example:\n"
+                "`123456789, 987654321`"
+            ),
+            color=discord.Color.red()
+        )
 
-except ValueError:
+        embed.set_footer(text="Made by Fluxstep")
 
-    embed = discord.Embed(
-        title="❌ Invalid Channel",
-        description=(
-            "Please send valid channel IDs.\n\n"
-            "Example:\n"
-            "`123456789, 987654321`"
-        ),
-        color=discord.Color.red()
-    )
+        await ctx.author.send(embed=embed)
 
-    embed.set_footer(text="Made by Fluxstep")
+    except asyncio.TimeoutError:
 
-    await ctx.author.send(embed=embed)
+        embed = discord.Embed(
+            title="⏰ Setup Timeout",
+            description="Setup took too long. Please try again.",
+            color=discord.Color.orange()
+        )
 
-except asyncio.TimeoutError:
+        embed.set_footer(text="Made by Fluxstep")
 
-    embed = discord.Embed(
-        title="⏰ Setup Timeout",
-        description="Setup took too long. Please try again.",
-        color=discord.Color.orange()
-    )
-
-    embed.set_footer(text="Made by Fluxstep")
-
-    await ctx.author.send(embed=embed)
-
+        await ctx.author.send(embed=embed)
 # ================= COMMANDS =================
 
 @bot.command()
