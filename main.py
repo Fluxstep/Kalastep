@@ -1030,7 +1030,8 @@ async def hint(ctx):
     state = game_states[guild_id]
 
     if not state["active"]:
-    return
+        
+        return
 
     hint_word = get_hint_word(
         state['last_word'],
