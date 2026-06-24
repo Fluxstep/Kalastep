@@ -291,10 +291,11 @@ def init_game_state(guild_id):
     guild_id = str(guild_id)
     if guild_id not in game_states:
         game_states[guild_id] = {
-            'last_word': None,
-            'last_user': None,
-            'used_words': set()
-        }
+    'last_word': None,
+    'last_user': None,
+    'used_words': set(),
+    'active': True
+}
 
 def is_valid_word(word):
     """Check if word is valid"""
@@ -1028,6 +1029,9 @@ async def hint(ctx):
     init_game_state(guild_id)
     state = game_states[guild_id]
 
+    if not state["active"]:
+    return
+
     hint_word = get_hint_word(
         state['last_word'],
         state['used_words']
@@ -1124,6 +1128,9 @@ async def skip(ctx):
 
     init_game_state(guild_id)
     state = game_states[guild_id]
+
+    if not state["active"]:
+    return
 
     if not state['last_word']:
         embed = discord.Embed(
@@ -1227,12 +1234,12 @@ async def help_command(ctx):
     embed.add_field(
         name="⚙️ Commands (COMMANDS CHANNEL)",
         value=(
-            "• `!help` - Show this menu\n"
-            "• `!top` - View leaderboard\n"
-            "• `!stats [member]` - Show player stats\n"
-            "• `!wallet` - Check your coins\n"
-            "• `!daily` - Claim daily 25 coins\n"
-            "• `!shop` - View shop"
+            "• `_help` - Show this menu\n"
+            "• `_top` - View leaderboard\n"
+            "• `_stats [member]` - Show player stats\n"
+            "• `_wallet` - Check your coins\n"
+            "• `_daily` - Claim daily 25 coins\n"
+            "• `_shop` - View shop"
         ),
         inline=False
     )
@@ -1240,9 +1247,11 @@ async def help_command(ctx):
     embed.add_field(
         name="🎯 Game Commands (GAME CHANNEL)",
         value=(
-            "• `!hint` - Buy a hint (**15 💰**)\n"
-            "• `!skip` - Skip chain (**30 💰**)\n"
-            "• `!reset` - Reset the game"
+            "• `_hint` - Buy a hint (**15 💰**)\n"
+            "• `_skip` - Skip chain (**30 💰**)\n"
+            "• `_reset` - Reset the game (**Owner Only**)\n"
+            "• `_start` - start the game (**Owner Only**)\n"
+            "• `_stop` - stop the game (**Owner Only**)\n"
         ),
         inline=False
     )
@@ -1308,6 +1317,78 @@ async def top(ctx):
     )
 
     await ctx.send(embed=embed)
+
+@bot.command()
+async def stop(ctx):
+
+    guild_id = get_guild_id(ctx)
+    server_config = get_server_channels(guild_id)
+
+    # Game channel only
+    if not server_config or ctx.channel.id != server_config["game"]:
+        await ctx.message.delete()
+        return
+
+    # KalaOwner only
+    kala_role = discord.utils.get(ctx.guild.roles, name="KalaOwner")
+
+    if ctx.author != ctx.guild.owner and (
+        kala_role is None or kala_role not in ctx.author.roles
+    ):
+        await ctx.message.delete()
+        return
+
+    init_game_state(guild_id)
+    state = game_states[guild_id]
+
+    state["active"] = False
+
+    embed = discord.Embed(
+        title="⏹️ Game Stopped",
+        description="Kaladont has been stopped.",
+        color=discord.Color.red()
+    )
+
+    embed.set_footer(text="Made by Fluxstep")
+
+    await ctx.send(embed=embed)
+    await ctx.message.delete()
+
+@bot.command()
+async def start(ctx):
+
+    guild_id = get_guild_id(ctx)
+    server_config = get_server_channels(guild_id)
+
+    # Game channel only
+    if not server_config or ctx.channel.id != server_config["game"]:
+        await ctx.message.delete()
+        return
+
+    # KalaOwner only
+    kala_role = discord.utils.get(ctx.guild.roles, name="KalaOwner")
+
+    if ctx.author != ctx.guild.owner and (
+        kala_role is None or kala_role not in ctx.author.roles
+    ):
+        await ctx.message.delete()
+        return
+
+    init_game_state(guild_id)
+    state = game_states[guild_id]
+
+    state["active"] = True
+
+    embed = discord.Embed(
+        title="▶️ Game Started",
+        description="Kaladont is now active again!",
+        color=discord.Color.green()
+    )
+
+    embed.set_footer(text="Made by Fluxstep")
+
+    await ctx.send(embed=embed)
+    await ctx.message.delete()
 
 
 # ================= RUN BOT =================
