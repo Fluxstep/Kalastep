@@ -552,10 +552,6 @@ async def on_message(message):
     state = game_states[guild_id]
 
     if not state["active"]:
-        try:
-            await message.delete()
-        except:
-            pass
         return
 
     word = message.content.lower().strip()
