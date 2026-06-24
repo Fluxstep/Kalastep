@@ -948,16 +948,8 @@ async def daily(ctx):
         )
 
         embed.set_footer(text="Made by Fluxstep")
-
-        try:
-            await ctx.author.send(embed=embed)
-        except:
-            await ctx.reply(
-                "❌ I couldn't DM you. Please enable DMs.",
-                delete_after=5
-            )
-
-        return
+          
+        await ctx.send(embed=embed)
 
     claim_daily(guild_id, ctx.author.id)
 
