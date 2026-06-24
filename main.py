@@ -993,7 +993,7 @@ try:
 except:
     await ctx.reply("❌ I couldn't DM you. Please enable DMs.", delete_after=5)
     await ctx.message.delete()
-        return
+return
 
     remove_coins(guild_id, ctx.author.id, 15)
 
