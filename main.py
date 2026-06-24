@@ -551,6 +551,13 @@ async def on_message(message):
     init_game_state(guild_id)
     state = game_states[guild_id]
 
+    if not state["active"]:
+        try:
+            await message.delete()
+        except:
+            pass
+        return
+
     word = message.content.lower().strip()
 
     # Validate word
@@ -1349,14 +1356,6 @@ async def stop(ctx):
    init_game_state(guild_id)
 state = game_states[guild_id]
 
-if not state["active"]:
-    try:
-        await message.delete()
-    except:
-        pass
-    return
-
-    state["active"] = False
 
     embed = discord.Embed(
         title="⏹️ Game Stopped",
