@@ -995,7 +995,7 @@ except:
     await ctx.message.delete()
 return
 
-    remove_coins(guild_id, ctx.author.id, 15)
+remove_coins(guild_id, ctx.author.id, 15)
 
     init_game_state(guild_id)
     state = game_states[guild_id]
