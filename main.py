@@ -698,56 +698,36 @@ async def ask_channels(ctx, check, title):
 async def setup(ctx):
 
     if ctx.author != ctx.guild.owner:
-
-        kala_owner_role = discord.utils.get(
-            ctx.guild.roles,
-            name="KalaOwner"
-        )
-
-        if not kala_owner_role or kala_owner_role not in ctx.author.roles:
-
-            embed = discord.Embed(
-                title="❌ Permission Denied",
-                description="Only KalaOwner can use this command.",
-                color=discord.Color.red()
-            )
-
-        embed.set_footer(text="Made by Fluxstep")
-
-        try:
-            await ctx.author.send(embed=embed)
-        except:
-            pass
-
-        await ctx.message.delete()
+        ...
         return
 
     guild_id = str(ctx.guild.id)
 
     await ctx.message.delete()
 
-def check(m):
-    return m.author == ctx.author and m.guild is None
+    def check(m):
+        return m.author == ctx.author and m.guild is None
 
-try:
+    try:
 
-    general_ids = await ask_channels(
-        ctx,
-        check,
-        "🎮 Kaladont Setup - Step 1/3\nGeneral Channels"
-    )
+        general_ids = await ask_channels(
+            ctx,
+            check,
+            "🎮 Kaladont Setup - Step 1/3\nGeneral Channels"
+        )
 
-    commands_ids = await ask_channels(
-        ctx,
-        check,
-        "🎮 Kaladont Setup - Step 2/3\nCommands Channels"
-    )
+        commands_ids = await ask_channels(
+            ctx,
+            check,
+            "🎮 Kaladont Setup - Step 2/3\nCommands Channels"
+        )
 
-    game_ids = await ask_channels(
-        ctx,
-        check,
-        "🎮 Kaladont Setup - Step 3/3\nGame Channels"
-    )
+        game_ids = await ask_channels(
+            ctx,
+            check,
+            "🎮 Kaladont Setup - Step 3/3\nGame Channels"
+        )
+
 
     servers[guild_id] = {
         "general": general_ids,
