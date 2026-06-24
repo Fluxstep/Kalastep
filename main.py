@@ -1350,6 +1350,7 @@ async def stop(ctx):
     state = game_states[guild_id]
 
     if not state["active"]:
+    
     try:
         await message.delete()
     except:
