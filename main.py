@@ -435,33 +435,45 @@ async def on_ready():
     print(f"📚 Dictionary loaded with {len(dictionary)} words")
     print(f"🔒 Guild isolation: ENABLED")
 
+
 @bot.event
 async def on_guild_join(guild):
     """When bot joins a server"""
     try:
         existing_role = discord.utils.get(guild.roles, name="KalaOwner")
-        
+
         if not existing_role:
-            role = await guild.create_role(name="KalaOwner", color=discord.Color.gold())
+            role = await guild.create_role(
+                name="KalaOwner",
+                color=discord.Color.gold()
+            )
             print(f"✅ Created KalaOwner role in {guild.name}")
         else:
             role = existing_role
 
         await guild.owner.add_roles(role)
         print(f"✅ Gave KalaOwner to {guild.owner} in {guild.name}")
+
     except Exception as e:
         print(f"❌ Error setting up roles: {e}")
+
 
 @bot.event
 async def on_command_error(ctx, error):
     """Handle command errors silently"""
+
     if isinstance(error, commands.CommandNotFound):
         return
+
     if isinstance(error, commands.MissingRequiredArgument):
         return
 
+    print(error)
+
+
 @bot.event
 async def on_message(message):
+
     global leaderboard, coins_data
 
     if message.author.bot:
@@ -470,7 +482,9 @@ async def on_message(message):
     guild_id = get_guild_id(message)
     server_config = get_server_channels(guild_id)
 
+    # Process commands first
     if message.content.startswith("!"):
+
         allowed_game_commands = ["!hint", "!skip", "!reset"]
 
         if (
@@ -478,16 +492,31 @@ async def on_message(message):
             and message.channel.id == server_config["game"]
             and message.content.split()[0].lower() in allowed_game_commands
         ):
+
             await bot.process_commands(message)
 
             try:
                 await message.delete()
             except:
                 pass
+
             return
 
+        # All other commands (!help !daily !shop !top ...)
         await bot.process_commands(message)
         return
+
+    # ======================
+    # GAME MESSAGES GO HERE
+    # ======================
+
+    if not server_config:
+        return
+
+    if message.channel.id != server_config["game"]:
+        return
+
+    # Put your Kaladont word-chain code here
 
     # No server config, ignore
     if not server_config:
