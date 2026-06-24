@@ -1131,7 +1131,8 @@ async def skip(ctx):
     state = game_states[guild_id]
 
     if not state["active"]:
-    return
+        
+        return
 
     if not state['last_word']:
         embed = discord.Embed(
