@@ -20,7 +20,7 @@ intents.guilds = True
 intents.members = True
 
 bot = commands.Bot(
-    command_prefix="!",
+    command_prefix="_",
     intents=intents,
     help_command=None
 )
@@ -484,9 +484,9 @@ async def on_message(message):
     server_config = get_server_channels(guild_id)
 
     # Process commands first
-    if message.content.startswith("!"):
+    if message.content.startswith("_"):
 
-        allowed_game_commands = ["!hint", "!skip", "!reset"]
+        allowed_game_commands = ["_hint", "_skip", "_reset"]
 
         if (
             server_config
