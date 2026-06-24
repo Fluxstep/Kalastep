@@ -1353,8 +1353,10 @@ async def stop(ctx):
         await ctx.message.delete()
         return
 
-   init_game_state(guild_id)
-state = game_states[guild_id]
+    init_game_state(guild_id)
+    state = game_states[guild_id]
+
+    state["active"] = False
 
 
     embed = discord.Embed(
