@@ -988,7 +988,7 @@ async def hint(ctx):
             color=discord.Color.red()
         )
         embed.set_footer(text="Made by Fluxstep")
-        try:
+try:
     await ctx.author.send(embed=embed)
 except:
     await ctx.reply("❌ I couldn't DM you. Please enable DMs.", delete_after=5)
