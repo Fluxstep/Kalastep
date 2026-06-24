@@ -929,7 +929,6 @@ async def wallet(ctx):
 
 @bot.command()
 async def daily(ctx):
-    """Claim daily reward"""
 
     guild_id = get_guild_id(ctx)
     server_config = get_server_channels(guild_id)
@@ -947,9 +946,8 @@ async def daily(ctx):
             color=discord.Color.orange()
         )
 
-        embed.set_footer(text="Made by Fluxstep")
-          
         await ctx.send(embed=embed)
+        return
 
     claim_daily(guild_id, ctx.author.id)
 
@@ -959,16 +957,9 @@ async def daily(ctx):
         color=discord.Color.green()
     )
 
-    embed.set_footer(text="Made by Fluxstep")
-
-    try:
-        await ctx.author.send(embed=embed)
-    except:
-        await ctx.reply(
-            "❌ I couldn't DM you. Please enable DMs.",
-            delete_after=5
-        )
-
+    await ctx.send(embed=embed)
+    return
+    
 @bot.command()
 async def shop(ctx):
     """View shop"""
