@@ -697,16 +697,33 @@ async def ask_channels(ctx, check, title):
 @bot.command()
 async def setup(ctx):
 
-    if ctx.author != ctx.guild.owner:
-        ...
+    kala_role = discord.utils.get(ctx.guild.roles, name="KalaOwner")
+
+    if ctx.author != ctx.guild.owner and (
+        kala_role is None or kala_role not in ctx.author.roles
+    ):
+        try:
+            await ctx.author.send(
+                "❌ Only the server owner or KalaOwner can use setup."
+            )
+        except:
+            pass
+
+        await ctx.message.delete()
         return
 
     guild_id = str(ctx.guild.id)
 
-    await ctx.message.delete()
+    try:
+        await ctx.message.delete()
+    except:
+        pass
 
     def check(m):
-        return m.author == ctx.author and m.guild is None
+        return (
+            m.author == ctx.author
+            and m.guild is None
+        )
 
     try:
 
@@ -791,6 +808,8 @@ async def setup(ctx):
             if channel:
                 await channel.send(embed=start_embed)
 
+        print(f"Setup completed for guild {guild_id}")
+
     except ValueError:
 
         embed = discord.Embed(
@@ -798,7 +817,7 @@ async def setup(ctx):
             description=(
                 "Please send valid channel IDs.\n\n"
                 "Example:\n"
-                "`123456789, 987654321`"
+                "`123456789012345678, 987654321098765432`"
             ),
             color=discord.Color.red()
         )
@@ -818,6 +837,17 @@ async def setup(ctx):
         embed.set_footer(text="Made by Fluxstep")
 
         await ctx.author.send(embed=embed)
+
+    except Exception as e:
+
+        print(f"SETUP ERROR: {e}")
+
+        try:
+            await ctx.author.send(
+                f"❌ Setup failed.\n\nError: `{e}`"
+            )
+        except:
+            pass
 # ================= COMMANDS =================
 
 @bot.command()
